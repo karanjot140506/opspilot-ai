@@ -19,3 +19,6 @@ backend/target/
 .DS_Store
 Thumbs.db
 '@ | Set-Content -Encoding utf8 .gitignore
+# Local logs
+backend/*.txt
+*.log
