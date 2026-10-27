@@ -40,5 +40,24 @@ public class IncidentService {
                 .orElseThrow(() ->
                         new IncidentNotFoundException(id));
     }
+    
+@Transactional
+public Incident updateIncidentStatus(Long id, String newStatus) {
+    Incident incident = incidentRepository.findById(id)
+            .orElseThrow(() -> new IncidentNotFoundException(id));
+
+    if (newStatus == null ||
+            !List.of("OPEN", "IN_PROGRESS", "RESOLVED")
+                    .contains(newStatus.trim().toUpperCase())) {
+        throw new IllegalArgumentException(
+                "Invalid status. Allowed values: OPEN, IN_PROGRESS, RESOLVED");
+    }
+
+    incident.setStatus(newStatus.trim().toUpperCase());
+    incident.setUpdatedAt(OffsetDateTime.now());
+
+    return incidentRepository.save(incident);
+}
+
 }
 

@@ -46,10 +46,24 @@ public class IncidentController {
     }
 
     @GetMapping("/{id}")
-    public IncidentResponse getIncidentById(@PathVariable Long id) {
+    public IncidentResponse getIncidentById(@PathVariable("id") Long id) {
         return IncidentResponse.from(
                 incidentService.getIncidentById(id)
         );
     }
+    
+@PatchMapping("/{id}/status")
+public IncidentResponse updateIncidentStatus(
+        @PathVariable("id") Long id,
+        @RequestBody java.util.Map<String, String> request) {
+
+    Incident updated = incidentService.updateIncidentStatus(
+            id,
+            request.get("status")
+    );
+
+    return IncidentResponse.from(updated);
+}
+
 }
 

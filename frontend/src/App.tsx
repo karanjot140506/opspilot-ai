@@ -1,8 +1,8 @@
-
 import { useEffect, useState } from "react";
 import {
   getIncidents,
   createIncident,
+  updateIncidentStatus,
   type Incident,
   type CreateIncidentRequest,
 } from "./api/incidents";
@@ -18,6 +18,9 @@ const emptyForm: CreateIncidentRequest = {
 function App() {
   const [incidents, setIncidents] = useState<Incident[]>([]);
   const [form, setForm] = useState<CreateIncidentRequest>(emptyForm);
+  const [search, setSearch] = useState("");
+  const [severityFilter, setSeverityFilter] = useState("ALL");
+  const [statusFilter, setStatusFilter] = useState("ALL");
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
@@ -29,9 +32,7 @@ function App() {
       const data = await getIncidents();
       setIncidents(data);
     } catch (err: unknown) {
-      setError(
-        err instanceof Error ? err.message : "Failed to load incidents"
-      );
+      setError(err instanceof Error ? err.message : "Failed to load incidents");
     } finally {
       setLoading(false);
     }
@@ -41,10 +42,23 @@ function App() {
     void loadIncidents();
   }, []);
 
-  function updateForm(
-    field: keyof CreateIncidentRequest,
-    value: string
-  ) {
+  const filteredIncidents = incidents.filter((incident) => {
+    const query = search.toLowerCase().trim();
+
+    const matchesSearch =
+      incident.title.toLowerCase().includes(query) ||
+      incident.description.toLowerCase().includes(query);
+
+    const matchesSeverity =
+      severityFilter === "ALL" || incident.severity === severityFilter;
+
+    const matchesStatus =
+      statusFilter === "ALL" || incident.status === statusFilter;
+
+    return matchesSearch && matchesSeverity && matchesStatus;
+  });
+
+  function updateForm(field: keyof CreateIncidentRequest, value: string) {
     setForm((current) => ({ ...current, [field]: value }));
   }
 
@@ -61,10 +75,25 @@ function App() {
       await loadIncidents();
     } catch (err: unknown) {
       setError(
-        err instanceof Error ? err.message : "Failed to create incident"
+        err instanceof Error ? err.message : "Failed to create incident",
       );
     } finally {
       setSubmitting(false);
+    }
+  }
+
+  async function handleStatusChange(incidentId: number, newStatus: string) {
+    setError("");
+    setSuccess("");
+
+    try {
+      await updateIncidentStatus(incidentId, newStatus);
+      setSuccess("Incident status updated successfully.");
+      await loadIncidents();
+    } catch (err: unknown) {
+      setError(
+        err instanceof Error ? err.message : "Failed to update incident status",
+      );
     }
   }
 
@@ -118,9 +147,7 @@ function App() {
               Severity
               <select
                 value={form.severity}
-                onChange={(event) =>
-                  updateForm("severity", event.target.value)
-                }
+                onChange={(event) => updateForm("severity", event.target.value)}
               >
                 <option value="LOW">Low</option>
                 <option value="MEDIUM">Medium</option>
@@ -154,6 +181,39 @@ function App() {
 
       <section className="incident-section">
         <h2>Incidents</h2>
+        <div className="incident-filters">
+          <input
+            type="search"
+            placeholder="Search title or description..."
+            value={search}
+            onChange={(event) => setSearch(event.target.value)}
+          />
+
+          <select
+            value={severityFilter}
+            onChange={(event) => setSeverityFilter(event.target.value)}
+          >
+            <option value="ALL">All severities</option>
+            <option value="LOW">Low</option>
+            <option value="MEDIUM">Medium</option>
+            <option value="HIGH">High</option>
+            <option value="CRITICAL">Critical</option>
+          </select>
+
+          <select
+            value={statusFilter}
+            onChange={(event) => setStatusFilter(event.target.value)}
+          >
+            <option value="ALL">All statuses</option>
+            <option value="OPEN">Open</option>
+            <option value="IN_PROGRESS">In progress</option>
+            <option value="RESOLVED">Resolved</option>
+          </select>
+        </div>
+
+        <p className="filter-count">
+          Showing {filteredIncidents.length} of {incidents.length} incidents
+        </p>
 
         {loading && <p>Loading incidents...</p>}
 
@@ -162,13 +222,11 @@ function App() {
         )}
 
         <div className="incident-list">
-          {incidents.map((incident) => (
+          {filteredIncidents.map((incident) => (
             <article className="incident-card" key={incident.id}>
               <div className="incident-card-heading">
                 <h3>{incident.title}</h3>
-                <span
-                  className={`severity ${incident.severity.toLowerCase()}`}
-                >
+                <span className={`severity ${incident.severity.toLowerCase()}`}>
                   {incident.severity}
                 </span>
               </div>
@@ -177,7 +235,21 @@ function App() {
 
               <div className="incident-meta">
                 <span>Service: {incident.serviceName}</span>
-                <span>Status: {incident.status}</span>
+
+                <label className="status-control">
+                  Status:
+                  <select
+                    value={incident.status}
+                    onChange={(event) =>
+                      void handleStatusChange(incident.id, event.target.value)
+                    }
+                  >
+                    <option value="OPEN">Open</option>
+                    <option value="IN_PROGRESS">In Progress</option>
+                    <option value="RESOLVED">Resolved</option>
+                  </select>
+                </label>
+
                 <span>
                   Created: {new Date(incident.createdAt).toLocaleString()}
                 </span>
