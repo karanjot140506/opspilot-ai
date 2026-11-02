@@ -13,6 +13,7 @@ const emptyForm: CreateIncidentRequest = {
   description: "",
   severity: "MEDIUM",
   serviceName: "",
+  priority: "MEDIUM",
 };
 
 function App() {
@@ -21,6 +22,7 @@ function App() {
   const [search, setSearch] = useState("");
   const [severityFilter, setSeverityFilter] = useState("ALL");
   const [statusFilter, setStatusFilter] = useState("ALL");
+  const [priorityFilter, setPriorityFilter] = useState("ALL");
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
@@ -55,8 +57,23 @@ function App() {
     const matchesStatus =
       statusFilter === "ALL" || incident.status === statusFilter;
 
-    return matchesSearch && matchesSeverity && matchesStatus;
+    const matchesPriority =
+      priorityFilter === "ALL" || incident.priority === priorityFilter;
+
+    return matchesSearch && matchesSeverity && matchesStatus && matchesPriority;
   });
+
+  const priorityOrder: Record<string, number> = {
+    CRITICAL: 1,
+    HIGH: 2,
+    MEDIUM: 3,
+    LOW: 4,
+  };
+
+  const sortedIncidents = [...filteredIncidents].sort(
+    (a, b) =>
+      (priorityOrder[a.priority] ?? 99) - (priorityOrder[b.priority] ?? 99),
+  );
 
   function updateForm(field: keyof CreateIncidentRequest, value: string) {
     setForm((current) => ({ ...current, [field]: value }));
@@ -157,6 +174,20 @@ function App() {
             </label>
 
             <label>
+              Priority
+              <select
+                value={form.priority}
+                onChange={(event) => updateForm("priority", event.target.value)}
+                required
+              >
+                <option value="LOW">Low</option>
+                <option value="MEDIUM">Medium</option>
+                <option value="HIGH">High</option>
+                <option value="CRITICAL">Critical</option>
+              </select>
+            </label>
+
+            <label>
               Affected service
               <input
                 value={form.serviceName}
@@ -209,6 +240,17 @@ function App() {
             <option value="IN_PROGRESS">In progress</option>
             <option value="RESOLVED">Resolved</option>
           </select>
+
+          <select
+            value={priorityFilter}
+            onChange={(event) => setPriorityFilter(event.target.value)}
+          >
+            <option value="ALL">All Priorities</option>
+            <option value="CRITICAL">Critical</option>
+            <option value="HIGH">High</option>
+            <option value="MEDIUM">Medium</option>
+            <option value="LOW">Low</option>
+          </select>
         </div>
 
         <p className="filter-count">
@@ -222,13 +264,24 @@ function App() {
         )}
 
         <div className="incident-list">
-          {filteredIncidents.map((incident) => (
+          {sortedIncidents.map((incident) => (
             <article className="incident-card" key={incident.id}>
               <div className="incident-card-heading">
                 <h3>{incident.title}</h3>
-                <span className={`severity ${incident.severity.toLowerCase()}`}>
-                  {incident.severity}
-                </span>
+
+                <div className="incident-badges">
+                  <span
+                    className={`severity ${incident.severity.toLowerCase()}`}
+                  >
+                    {incident.severity}
+                  </span>
+
+                  <span
+                    className={`priority ${incident.priority.toLowerCase()}`}
+                  >
+                    {incident.priority}
+                  </span>
+                </div>
               </div>
 
               <p>{incident.description}</p>

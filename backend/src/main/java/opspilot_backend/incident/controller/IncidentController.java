@@ -1,6 +1,5 @@
 package opspilot_backend.incident.controller;
 
-
 import jakarta.validation.Valid;
 import opspilot_backend.incident.dto.CreateIncidentRequest;
 import opspilot_backend.incident.dto.IncidentResponse;
@@ -32,8 +31,14 @@ public class IncidentController {
         incident.setDescription(request.description().trim());
         incident.setSeverity(request.severity().trim().toUpperCase());
         incident.setServiceName(request.serviceName().trim());
+        incident.setPriority(request.priority().trim().toUpperCase());
 
         Incident saved = incidentService.createIncident(incident);
+        if (!List.of("CRITICAL", "HIGH", "MEDIUM", "LOW")
+                .contains(incident.getPriority())) {
+            throw new IllegalArgumentException(
+                    "Invalid priority. Allowed values: CRITICAL, HIGH, MEDIUM, LOW");
+        }
         return IncidentResponse.from(saved);
     }
 
@@ -48,22 +53,19 @@ public class IncidentController {
     @GetMapping("/{id}")
     public IncidentResponse getIncidentById(@PathVariable("id") Long id) {
         return IncidentResponse.from(
-                incidentService.getIncidentById(id)
-        );
+                incidentService.getIncidentById(id));
     }
-    
-@PatchMapping("/{id}/status")
-public IncidentResponse updateIncidentStatus(
-        @PathVariable("id") Long id,
-        @RequestBody java.util.Map<String, String> request) {
 
-    Incident updated = incidentService.updateIncidentStatus(
-            id,
-            request.get("status")
-    );
+    @PatchMapping("/{id}/status")
+    public IncidentResponse updateIncidentStatus(
+            @PathVariable("id") Long id,
+            @RequestBody java.util.Map<String, String> request) {
 
-    return IncidentResponse.from(updated);
+        Incident updated = incidentService.updateIncidentStatus(
+                id,
+                request.get("status"));
+
+        return IncidentResponse.from(updated);
+    }
+
 }
-
-}
-

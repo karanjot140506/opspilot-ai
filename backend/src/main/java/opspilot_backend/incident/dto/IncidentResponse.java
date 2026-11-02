@@ -1,5 +1,5 @@
-package opspilot_backend.incident.dto;
 
+package opspilot_backend.incident.dto;
 
 import opspilot_backend.incident.entity.Incident;
 import java.time.OffsetDateTime;
@@ -10,6 +10,7 @@ public record IncidentResponse(
         String description,
         String severity,
         String status,
+        String priority,
         String serviceName,
         OffsetDateTime createdAt,
         OffsetDateTime updatedAt
@@ -21,10 +22,10 @@ public record IncidentResponse(
                 incident.getDescription(),
                 incident.getSeverity(),
                 incident.getStatus(),
+                incident.getPriority(),
                 incident.getServiceName(),
                 incident.getCreatedAt(),
                 incident.getUpdatedAt()
         );
     }
 }
-

@@ -23,6 +23,7 @@ public class IncidentService {
 
         incident.setId(null);
         incident.setStatus("OPEN");
+        incident.setPriority("MEDIUM");
         incident.setCreatedAt(now);
         incident.setUpdatedAt(now);
 

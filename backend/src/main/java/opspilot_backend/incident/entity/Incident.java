@@ -33,6 +33,9 @@ public class Incident {
     @Column(name = "updated_at", nullable = false)
     private OffsetDateTime updatedAt;
 
+    @Column(nullable = false, length = 20)
+    private String priority = "MEDIUM";
+
     public Incident() {
     }
 
@@ -59,5 +62,8 @@ public class Incident {
 
     public OffsetDateTime getUpdatedAt() { return updatedAt; }
     public void setUpdatedAt(OffsetDateTime updatedAt) { this.updatedAt = updatedAt; }
+
+    public String getPriority() { return priority;}
+    public void setPriority(String priority) {   this.priority = priority;}
 }
 

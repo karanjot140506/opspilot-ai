@@ -5,6 +5,7 @@ export interface Incident {
   description: string;
   severity: string;
   status: string;
+  priority: string;
   serviceName: string;
   createdAt: string;
   updatedAt: string;
@@ -15,6 +16,7 @@ export interface CreateIncidentRequest {
   description: string;
   severity: string;
   serviceName: string;
+  priority: string;
 }
 
 const API_BASE_URL = "http://localhost:8080/api/incidents";

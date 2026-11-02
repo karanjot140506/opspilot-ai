@@ -1,5 +1,5 @@
-package opspilot_backend.incident.dto;
 
+package opspilot_backend.incident.dto;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
@@ -18,8 +18,10 @@ public record CreateIncidentRequest(
 
         @NotBlank(message = "Service name is required")
         @Size(max = 100, message = "Service name must be at most 100 characters")
-        String serviceName
+        String serviceName,
+
+        @NotBlank(message = "Priority is required")
+        String priority
 
 ) {
 }
-
