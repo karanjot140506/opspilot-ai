@@ -68,4 +68,16 @@ public class IncidentController {
         return IncidentResponse.from(updated);
     }
 
+    @PatchMapping("/{id}/priority")
+    public IncidentResponse updateIncidentPriority(
+            @PathVariable("id") Long id,
+            @RequestBody java.util.Map<String, String> request) {
+
+        Incident updated = incidentService.updateIncidentPriority(
+                id,
+                request.get("priority"));
+
+        return IncidentResponse.from(updated);
+    }
+
 }

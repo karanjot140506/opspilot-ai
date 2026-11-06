@@ -71,3 +71,27 @@ export async function updateIncidentStatus(
 
   return response.json() as Promise<Incident>;
 }
+
+export interface IncidentActivity {
+  id: number;
+  incidentId: number;
+  action: string;
+  description: string;
+  oldValue: string | null;
+  newValue: string | null;
+  createdAt: string;
+}
+
+export async function getIncidentActivities(
+  incidentId: number
+): Promise<IncidentActivity[]> {
+  const response = await fetch(
+    `http://localhost:8080/api/incidents/${incidentId}/activities`
+  );
+
+  if (!response.ok) {
+    throw new Error("Failed to fetch incident activities");
+  }
+
+  return response.json();
+}

@@ -3,8 +3,10 @@ import {
   getIncidents,
   createIncident,
   updateIncidentStatus,
+  getIncidentActivities,
   type Incident,
   type CreateIncidentRequest,
+  type IncidentActivity,
 } from "./api/incidents";
 import "./App.css";
 
@@ -18,6 +20,11 @@ const emptyForm: CreateIncidentRequest = {
 
 function App() {
   const [incidents, setIncidents] = useState<Incident[]>([]);
+  const [activities, setActivities] = useState<IncidentActivity[]>([]);
+  const [selectedIncidentId, setSelectedIncidentId] = useState<number | null>(
+    null,
+  );
+  const [activityLoading, setActivityLoading] = useState(false);
   const [form, setForm] = useState<CreateIncidentRequest>(emptyForm);
   const [search, setSearch] = useState("");
   const [severityFilter, setSeverityFilter] = useState("ALL");
@@ -111,6 +118,31 @@ function App() {
       setError(
         err instanceof Error ? err.message : "Failed to update incident status",
       );
+    }
+  }
+  async function handleViewActivity(incidentId: number) {
+    if (selectedIncidentId === incidentId) {
+      setSelectedIncidentId(null);
+      setActivities([]);
+      return;
+    }
+
+    setSelectedIncidentId(incidentId);
+    setActivities([]);
+    setActivityLoading(true);
+    setError("");
+
+    try {
+      const data = await getIncidentActivities(incidentId);
+      setActivities(data);
+    } catch (err: unknown) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Failed to load incident activities",
+      );
+    } finally {
+      setActivityLoading(false);
     }
   }
 
@@ -307,6 +339,38 @@ function App() {
                   Created: {new Date(incident.createdAt).toLocaleString()}
                 </span>
               </div>
+              <button
+                type="button"
+                onClick={() => void handleViewActivity(incident.id)}
+              >
+                {selectedIncidentId === incident.id
+                  ? "Hide Activity"
+                  : "View Activity"}
+              </button>
+
+              {selectedIncidentId === incident.id && (
+                <div className="activity-timeline">
+                  <h4>Activity Timeline</h4>
+
+                  {activityLoading ? (
+                    <p>Loading activity...</p>
+                  ) : activities.length === 0 ? (
+                    <p>No activity recorded yet.</p>
+                  ) : (
+                    <ol>
+                      {activities.map((activity) => (
+                        <li key={activity.id}>
+                          <strong>{activity.action.replace(/_/g, " ")}</strong>
+                          <p>{activity.description}</p>
+                          <small>
+                            {new Date(activity.createdAt).toLocaleString()}
+                          </small>
+                        </li>
+                      ))}
+                    </ol>
+                  )}
+                </div>
+              )}
             </article>
           ))}
         </div>

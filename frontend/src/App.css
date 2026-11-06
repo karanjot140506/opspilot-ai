@@ -155,3 +155,46 @@
   background: #dcfce7;
   color: #166534;
 }
+.activity-timeline {
+  margin-top: 16px;
+  padding: 16px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+}
+
+.activity-timeline h4 {
+  margin: 0 0 16px;
+  color: #1e293b;
+}
+
+.activity-timeline ol {
+  margin: 0;
+  padding-left: 20px;
+}
+
+.activity-timeline li {
+  padding: 0 0 16px 8px;
+  border-left: 2px solid #cbd5e1;
+}
+
+.activity-timeline li:last-child {
+  padding-bottom: 0;
+  border-left-color: transparent;
+}
+
+.activity-timeline li strong {
+  color: #2563eb;
+  font-size: 14px;
+}
+
+.activity-timeline li p {
+  margin: 5px 0;
+  color: #475569;
+  font-size: 14px;
+}
+
+.activity-timeline li small {
+  color: #64748b;
+  font-size: 12px;
+}
