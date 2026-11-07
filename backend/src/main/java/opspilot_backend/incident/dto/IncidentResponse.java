@@ -12,6 +12,7 @@ public record IncidentResponse(
         String status,
         String priority,
         String serviceName,
+        Long assignedToId,
         OffsetDateTime createdAt,
         OffsetDateTime updatedAt
 ) {
@@ -24,6 +25,7 @@ public record IncidentResponse(
                 incident.getStatus(),
                 incident.getPriority(),
                 incident.getServiceName(),
+                incident.getAssignedToId(),
                 incident.getCreatedAt(),
                 incident.getUpdatedAt()
         );

@@ -9,6 +9,7 @@ export interface Incident {
   serviceName: string;
   createdAt: string;
   updatedAt: string;
+  assignedToId: number | null;
 }
 
 export interface CreateIncidentRequest {
@@ -79,6 +80,7 @@ export interface IncidentActivity {
   description: string;
   oldValue: string | null;
   newValue: string | null;
+  assignedToId: number | null;
   createdAt: string;
 }
 
@@ -91,6 +93,44 @@ export async function getIncidentActivities(
 
   if (!response.ok) {
     throw new Error("Failed to fetch incident activities");
+  }
+
+  return response.json();
+}
+
+export interface TeamMember {
+  id: number;
+  name: string;
+  email: string;
+  role: string;
+  createdAt: string;
+}
+export async function getTeamMembers(): Promise<TeamMember[]> {
+  const response = await fetch("http://localhost:8080/api/team-members");
+
+  if (!response.ok) {
+    throw new Error("Failed to fetch team members");
+  }
+
+  return response.json();
+}
+export async function assignIncident(
+  incidentId: number,
+  teamMemberId: number
+): Promise<Incident> {
+  const response = await fetch(
+    `http://localhost:8080/api/incidents/${incidentId}/assign`,
+    {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ teamMemberId }),
+    }
+  );
+
+  if (!response.ok) {
+    throw new Error("Failed to assign incident");
   }
 
   return response.json();

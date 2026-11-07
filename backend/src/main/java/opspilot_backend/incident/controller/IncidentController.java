@@ -7,7 +7,7 @@ import opspilot_backend.incident.entity.Incident;
 import opspilot_backend.incident.service.IncidentService;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
-
+import java.util.Map;
 import java.util.List;
 
 @RestController
@@ -64,6 +64,18 @@ public class IncidentController {
         Incident updated = incidentService.updateIncidentStatus(
                 id,
                 request.get("status"));
+
+        return IncidentResponse.from(updated);
+    }
+
+    @PatchMapping("/{id}/assign")
+    public IncidentResponse assignIncident(
+            @PathVariable("id") Long id,
+            @RequestBody Map<String, Long> request) {
+
+        Incident updated = incidentService.assignIncident(
+                id,
+                request.get("teamMemberId"));
 
         return IncidentResponse.from(updated);
     }

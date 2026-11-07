@@ -4,7 +4,10 @@ import {
   createIncident,
   updateIncidentStatus,
   getIncidentActivities,
+  getTeamMembers,
+  assignIncident,
   type Incident,
+  type TeamMember,
   type CreateIncidentRequest,
   type IncidentActivity,
 } from "./api/incidents";
@@ -34,6 +37,7 @@ function App() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
 
   async function loadIncidents() {
     setError("");
@@ -49,6 +53,19 @@ function App() {
 
   useEffect(() => {
     void loadIncidents();
+  }, []);
+
+  useEffect(() => {
+    async function loadTeamMembers() {
+      try {
+        const data = await getTeamMembers();
+        setTeamMembers(data);
+      } catch (error) {
+        console.error("Failed to load team members:", error);
+      }
+    }
+
+    loadTeamMembers();
   }, []);
 
   const filteredIncidents = incidents.filter((incident) => {
@@ -143,6 +160,26 @@ function App() {
       );
     } finally {
       setActivityLoading(false);
+    }
+  }
+
+  async function handleAssignIncident(
+    incidentId: number,
+    teamMemberId: number,
+  ) {
+    try {
+      await assignIncident(incidentId, teamMemberId);
+
+      const updatedIncidents = await getIncidents();
+      setIncidents(updatedIncidents);
+
+      if (selectedIncidentId === incidentId) {
+        const updatedActivities = await getIncidentActivities(incidentId);
+        setActivities(updatedActivities);
+      }
+    } catch (error) {
+      console.error("Failed to assign incident:", error);
+      alert("Failed to assign incident. Please try again.");
     }
   }
 
@@ -338,6 +375,26 @@ function App() {
                 <span>
                   Created: {new Date(incident.createdAt).toLocaleString()}
                 </span>
+              </div>
+
+              <div className="assignment-section">
+                <label htmlFor={`assignee-${incident.id}`}>Assigned To</label>
+
+                <select
+                  id={`assignee-${incident.id}`}
+                  value={incident.assignedToId ?? ""}
+                  onChange={(e) =>
+                    handleAssignIncident(incident.id, Number(e.target.value))
+                  }
+                >
+                  <option value="">Unassigned</option>
+
+                  {teamMembers.map((member) => (
+                    <option key={member.id} value={member.id}>
+                      {member.name} ({member.role})
+                    </option>
+                  ))}
+                </select>
               </div>
               <button
                 type="button"

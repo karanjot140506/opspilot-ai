@@ -198,3 +198,32 @@
   color: #64748b;
   font-size: 12px;
 }
+.assignment-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.assignment-section label {
+  font-size: 14px;
+  font-weight: 600;
+  color: #555;
+}
+
+.assignment-section select {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  background-color: white;
+  color: #333;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.assignment-section select:focus {
+  outline: none;
+  border-color: #6366f1;
+  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.15);
+}
