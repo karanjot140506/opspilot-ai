@@ -227,3 +227,151 @@
   border-color: #6366f1;
   box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.15);
 }
+/* SLA Tracking */
+.sla-section {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 12px 0;
+  font-size: 14px;
+}
+
+.sla-badge {
+  display: inline-block;
+  padding: 5px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.4px;
+}
+
+.sla-badge.on_track {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.sla-badge.at_risk {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.sla-badge.breached {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.sla-badge.completed {
+  background: #dbeafe;
+  color: #1e40af;
+}
+
+
+/* Incident card responsive layout */
+.dashboard {
+  width: 100%;
+  max-width: 1200px;
+  min-width: 0;
+  margin: 0 auto;
+  padding: 24px;
+  box-sizing: border-box;
+}
+
+.incident-section {
+  width: 100%;
+  min-width: 0;
+  margin-bottom: 28px;
+}
+
+.incident-list {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 20px;
+  width: 100%;
+  min-width: 0;
+}
+
+.incident-card {
+  width: 100%;
+  min-width: 0;
+  padding: 22px;
+  box-sizing: border-box;
+  text-align: left;
+  border: 1px solid #3a3b45;
+  border-radius: 12px;
+  overflow-wrap: anywhere;
+}
+
+.incident-card-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.incident-card-heading h3 {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.incident-meta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px 20px;
+  margin-top: 18px;
+}
+
+.incident-meta span,
+.incident-meta label {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.status-control {
+  display: inline-flex;
+  flex-wrap: wrap;
+}
+
+.assignment-section {
+  width: 100%;
+  min-width: 0;
+}
+
+.assignment-section select {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.sla-section {
+  flex-wrap: wrap;
+}
+
+@media (max-width: 600px) {
+  .dashboard {
+    padding: 12px;
+  }
+
+  .incident-card {
+    padding: 14px;
+  }
+
+  .incident-card-heading {
+    align-items: flex-start;
+  }
+
+  .incident-meta {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .status-control {
+    width: 100%;
+  }
+
+  .status-control select {
+    max-width: 100%;
+  }
+}

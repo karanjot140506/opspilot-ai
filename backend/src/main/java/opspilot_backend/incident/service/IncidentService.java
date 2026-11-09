@@ -39,6 +39,24 @@ public class IncidentService {
                 incident.setCreatedAt(now);
                 incident.setUpdatedAt(now);
 
+                incident.setResponseDueAt(
+                                switch (incident.getPriority()) {
+                                        case "CRITICAL" -> now.plusMinutes(5);
+                                        case "HIGH" -> now.plusMinutes(15);
+                                        case "MEDIUM" -> now.plusHours(1);
+                                        case "LOW" -> now.plusHours(4);
+                                        default -> throw new IllegalArgumentException("Invalid incident priority");
+                                });
+
+                incident.setResolutionDueAt(
+                                switch (incident.getPriority()) {
+                                        case "CRITICAL" -> now.plusHours(1);
+                                        case "HIGH" -> now.plusHours(4);
+                                        case "MEDIUM" -> now.plusHours(8);
+                                        case "LOW" -> now.plusHours(24);
+                                        default -> throw new IllegalArgumentException("Invalid incident priority");
+                                });
+
                 Incident savedIncident = incidentRepository.save(incident);
 
                 activityService.recordActivity(
@@ -111,6 +129,17 @@ public class IncidentService {
                         return incident;
                 }
 
+                // Record the first response time only once
+                if ("IN_PROGRESS".equals(updatedStatus)
+                                && incident.getFirstResponseAt() == null) {
+                        incident.setFirstResponseAt(OffsetDateTime.now());
+                }
+
+                // Record the resolution time
+                if ("RESOLVED".equals(updatedStatus)) {
+                        incident.setResolvedAt(OffsetDateTime.now());
+                }
+
                 incident.setStatus(updatedStatus);
                 incident.setUpdatedAt(OffsetDateTime.now());
 
@@ -160,6 +189,37 @@ public class IncidentService {
                                 updatedPriority);
 
                 return savedIncident;
+        }
+
+        public String getSlaStatus(Incident incident) {
+
+                OffsetDateTime now = OffsetDateTime.now();
+
+                if ("RESOLVED".equals(incident.getStatus())) {
+                        return "COMPLETED";
+                }
+
+                if (incident.getResolvedAt() != null) {
+                        return "COMPLETED";
+                }
+
+                if (incident.getResolutionDueAt() != null
+                                && now.isAfter(incident.getResolutionDueAt())) {
+                        return "BREACHED";
+                }
+
+                if (incident.getResponseDueAt() != null
+                                && incident.getFirstResponseAt() == null
+                                && now.isAfter(incident.getResponseDueAt())) {
+                        return "BREACHED";
+                }
+
+                if (incident.getResolutionDueAt() != null
+                                && now.plusMinutes(30).isAfter(incident.getResolutionDueAt())) {
+                        return "AT_RISK";
+                }
+
+                return "ON_TRACK";
         }
 
 }

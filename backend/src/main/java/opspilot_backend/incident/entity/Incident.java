@@ -12,6 +12,18 @@ public class Incident {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(name = "response_due_at")
+    private OffsetDateTime responseDueAt;
+
+    @Column(name = "resolution_due_at")
+    private OffsetDateTime resolutionDueAt;
+
+    @Column(name = "first_response_at")
+    private OffsetDateTime firstResponseAt;
+
+    @Column(name = "resolved_at")
+    private OffsetDateTime resolvedAt;
+
     @Column(name = "assigned_to_id")
     private Long assignedToId;
 
@@ -120,5 +132,37 @@ public class Incident {
 
     public void setAssignedToId(Long assignedToId) {
         this.assignedToId = assignedToId;
+    }
+
+    public OffsetDateTime getResponseDueAt() {
+        return responseDueAt;
+    }
+
+    public void setResponseDueAt(OffsetDateTime responseDueAt) {
+        this.responseDueAt = responseDueAt;
+    }
+
+    public OffsetDateTime getResolutionDueAt() {
+        return resolutionDueAt;
+    }
+
+    public void setResolutionDueAt(OffsetDateTime resolutionDueAt) {
+        this.resolutionDueAt = resolutionDueAt;
+    }
+
+    public OffsetDateTime getFirstResponseAt() {
+        return firstResponseAt;
+    }
+
+    public void setFirstResponseAt(OffsetDateTime firstResponseAt) {
+        this.firstResponseAt = firstResponseAt;
+    }
+
+    public OffsetDateTime getResolvedAt() {
+        return resolvedAt;
+    }
+
+    public void setResolvedAt(OffsetDateTime resolvedAt) {
+        this.resolvedAt = resolvedAt;
     }
 }

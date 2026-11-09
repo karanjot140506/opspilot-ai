@@ -355,6 +355,15 @@ function App() {
 
               <p>{incident.description}</p>
 
+              <div className="sla-section">
+                <strong>SLA Status:</strong>
+                <span
+                  className={`sla-badge ${incident.slaStatus?.toLowerCase()}`}
+                >
+                  {incident.slaStatus?.replace(/_/g, " ") ?? "UNKNOWN"}
+                </span>
+              </div>
+
               <div className="incident-meta">
                 <span>Service: {incident.serviceName}</span>
 

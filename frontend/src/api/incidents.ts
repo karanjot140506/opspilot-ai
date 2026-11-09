@@ -1,4 +1,3 @@
-
 export interface Incident {
   id: number;
   title: string;
@@ -10,6 +9,11 @@ export interface Incident {
   createdAt: string;
   updatedAt: string;
   assignedToId: number | null;
+  slaStatus: string;
+  responseDueAt: string | null;
+  resolutionDueAt: string | null;
+  firstResponseAt: string | null;
+  resolvedAt: string | null;
 }
 
 export interface CreateIncidentRequest {
@@ -33,7 +37,7 @@ export async function getIncidents(): Promise<Incident[]> {
 }
 
 export async function createIncident(
-  incident: CreateIncidentRequest
+  incident: CreateIncidentRequest,
 ): Promise<Incident> {
   const response = await fetch(API_BASE_URL, {
     method: "POST",
@@ -53,7 +57,7 @@ export async function createIncident(
 
 export async function updateIncidentStatus(
   id: number,
-  status: string
+  status: string,
 ): Promise<Incident> {
   const response = await fetch(`${API_BASE_URL}/${id}/status`, {
     method: "PATCH",
@@ -66,7 +70,7 @@ export async function updateIncidentStatus(
   if (!response.ok) {
     const message = await response.text();
     throw new Error(
-      message || `Failed to update incident status: ${response.status}`
+      message || `Failed to update incident status: ${response.status}`,
     );
   }
 
@@ -85,10 +89,10 @@ export interface IncidentActivity {
 }
 
 export async function getIncidentActivities(
-  incidentId: number
+  incidentId: number,
 ): Promise<IncidentActivity[]> {
   const response = await fetch(
-    `http://localhost:8080/api/incidents/${incidentId}/activities`
+    `http://localhost:8080/api/incidents/${incidentId}/activities`,
   );
 
   if (!response.ok) {
@@ -116,7 +120,7 @@ export async function getTeamMembers(): Promise<TeamMember[]> {
 }
 export async function assignIncident(
   incidentId: number,
-  teamMemberId: number
+  teamMemberId: number,
 ): Promise<Incident> {
   const response = await fetch(
     `http://localhost:8080/api/incidents/${incidentId}/assign`,
@@ -126,7 +130,7 @@ export async function assignIncident(
         "Content-Type": "application/json",
       },
       body: JSON.stringify({ teamMemberId }),
-    }
+    },
   );
 
   if (!response.ok) {

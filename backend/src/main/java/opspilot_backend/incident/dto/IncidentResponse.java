@@ -13,21 +13,30 @@ public record IncidentResponse(
         String priority,
         String serviceName,
         Long assignedToId,
+        String slaStatus,
+        OffsetDateTime responseDueAt,
+        OffsetDateTime resolutionDueAt,
+        OffsetDateTime firstResponseAt,
+        OffsetDateTime resolvedAt,
         OffsetDateTime createdAt,
-        OffsetDateTime updatedAt
-) {
-    public static IncidentResponse from(Incident incident) {
+        OffsetDateTime updatedAt) {
+    public static IncidentResponse from(Incident incident,  String slaStatus) {
         return new IncidentResponse(
                 incident.getId(),
                 incident.getTitle(),
                 incident.getDescription(),
                 incident.getSeverity(),
                 incident.getStatus(),
+                
                 incident.getPriority(),
                 incident.getServiceName(),
                 incident.getAssignedToId(),
+                slaStatus,
+                incident.getResponseDueAt(),
+                incident.getResolutionDueAt(),
+                incident.getFirstResponseAt(),
+                incident.getResolvedAt(),
                 incident.getCreatedAt(),
-                incident.getUpdatedAt()
-        );
+                incident.getUpdatedAt());
     }
 }
