@@ -222,4 +222,47 @@ public class IncidentService {
                 return "ON_TRACK";
         }
 
+        @Transactional
+        public void escalateIncident(Incident incident) {
+
+                if ("RESOLVED".equals(incident.getStatus())) {
+                        return;
+                }
+
+                Integer currentLevel = incident.getEscalationLevel();
+
+                if (currentLevel == null) {
+                        currentLevel = 0;
+                }
+
+                if (currentLevel >= 3) {
+                        return;
+                }
+
+                String oldPriority = incident.getPriority();
+                String newPriority;
+
+                switch (oldPriority) {
+                        case "LOW" -> newPriority = "MEDIUM";
+                        case "MEDIUM" -> newPriority = "HIGH";
+                        case "HIGH" -> newPriority = "CRITICAL";
+                        default -> {
+                                return;
+                        }
+                }
+
+                incident.setPriority(newPriority);
+                incident.setEscalationLevel(currentLevel + 1);
+                incident.setUpdatedAt(OffsetDateTime.now());
+
+                Incident savedIncident = incidentRepository.save(incident);
+
+                activityService.recordActivity(
+                                savedIncident.getId(),
+                                "ESCALATED",
+                                "Incident automatically escalated from "
+                                                + oldPriority + " to " + newPriority,
+                                oldPriority,
+                                newPriority);
+        }
 }

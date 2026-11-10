@@ -1,0 +1,2 @@
+ALTER TABLE incidents
+ADD COLUMN escalation_level INTEGER NOT NULL DEFAULT 0;

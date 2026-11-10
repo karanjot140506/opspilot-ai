@@ -12,6 +12,9 @@ public class Incident {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(name = "escalation_level", nullable = false)
+    private Integer escalationLevel = 0;
+
     @Column(name = "response_due_at")
     private OffsetDateTime responseDueAt;
 
@@ -164,5 +167,13 @@ public class Incident {
 
     public void setResolvedAt(OffsetDateTime resolvedAt) {
         this.resolvedAt = resolvedAt;
+    }
+
+    public Integer getEscalationLevel() {
+        return escalationLevel;
+    }
+
+    public void setEscalationLevel(Integer escalationLevel) {
+        this.escalationLevel = escalationLevel;
     }
 }

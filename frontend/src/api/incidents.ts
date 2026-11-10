@@ -10,6 +10,7 @@ export interface Incident {
   updatedAt: string;
   assignedToId: number | null;
   slaStatus: string;
+  escalationLevel: number;
   responseDueAt: string | null;
   resolutionDueAt: string | null;
   firstResponseAt: string | null;

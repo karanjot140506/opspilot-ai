@@ -364,6 +364,15 @@ function App() {
                 </span>
               </div>
 
+              <div className="escalation-section">
+                <strong>Escalation Level:</strong>
+                <span
+                  className={`escalation-badge level-${incident.escalationLevel}`}
+                >
+                  Level {incident.escalationLevel}
+                </span>
+              </div>
+
               <div className="incident-meta">
                 <span>Service: {incident.serviceName}</span>
 
