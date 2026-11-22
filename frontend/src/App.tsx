@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   getIncidents,
   createIncident,
@@ -39,6 +39,194 @@ function App() {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
+  const [dashboardSeverityFilter, setDashboardSeverityFilter] = useState("ALL");
+
+  const [dashboardStatusFilter, setDashboardStatusFilter] = useState("ALL");
+
+  const [dashboardAssigneeFilter, setDashboardAssigneeFilter] = useState("ALL");
+  const workloadData = useMemo(() => {
+    return teamMembers.map((member) => {
+      const assignedIncidents = incidents.filter(
+        (incident) => incident.assignedToId === member.id,
+      );
+
+      return {
+        id: member.id,
+        name: member.name,
+        total: assignedIncidents.length,
+        inProgress: assignedIncidents.filter(
+          (incident) => incident.status === "IN_PROGRESS",
+        ).length,
+      };
+    });
+  }, [teamMembers, incidents]);
+
+  const unassignedIncidents = incidents.filter(
+    (incident) => incident.assignedToId == null,
+  );
+  const filteredDashboardIncidents = useMemo(() => {
+    return incidents.filter((incident) => {
+      const matchesSeverity =
+        dashboardSeverityFilter === "ALL" ||
+        incident.severity === dashboardSeverityFilter;
+
+      const matchesStatus =
+        dashboardStatusFilter === "ALL" ||
+        incident.status === dashboardStatusFilter;
+
+      const matchesAssignee =
+        dashboardAssigneeFilter === "ALL" ||
+        (dashboardAssigneeFilter === "UNASSIGNED"
+          ? incident.assignedToId == null
+          : incident.assignedToId === Number(dashboardAssigneeFilter));
+
+      return matchesSeverity && matchesStatus && matchesAssignee;
+    });
+  }, [
+    incidents,
+    dashboardSeverityFilter,
+    dashboardStatusFilter,
+    dashboardAssigneeFilter,
+  ]);
+
+  const dashboardStats = useMemo(() => {
+    return {
+      total: filteredDashboardIncidents.length,
+
+      open: filteredDashboardIncidents.filter(
+        (incident) => incident.status === "OPEN",
+      ).length,
+
+      inProgress: filteredDashboardIncidents.filter(
+        (incident) => incident.status === "IN_PROGRESS",
+      ).length,
+
+      resolved: filteredDashboardIncidents.filter(
+        (incident) => incident.status === "RESOLVED",
+      ).length,
+
+      breached: filteredDashboardIncidents.filter(
+        (incident) => incident.slaStatus === "BREACHED",
+      ).length,
+
+      atRisk: filteredDashboardIncidents.filter(
+        (incident) => incident.slaStatus === "AT_RISK",
+      ).length,
+
+      onTrack: filteredDashboardIncidents.filter(
+        (incident) => incident.slaStatus === "ON_TRACK",
+      ).length,
+
+      completed: filteredDashboardIncidents.filter(
+        (incident) => incident.slaStatus === "COMPLETED",
+      ).length,
+
+      averageResolutionMinutes: (() => {
+        const resolvedIncidents = filteredDashboardIncidents.filter(
+          (incident) =>
+            incident.status === "RESOLVED" &&
+            incident.createdAt &&
+            incident.resolvedAt,
+        );
+
+        if (resolvedIncidents.length === 0) {
+          return 0;
+        }
+
+        const totalMinutes = resolvedIncidents.reduce((total, incident) => {
+          const created = new Date(incident.createdAt).getTime();
+          const resolved = new Date(incident.resolvedAt!).getTime();
+
+          return total + (resolved - created) / 60000;
+        }, 0);
+
+        return Math.round(totalMinutes / resolvedIncidents.length);
+      })(),
+
+      critical: filteredDashboardIncidents.filter(
+        (incident) => incident.severity === "CRITICAL",
+      ).length,
+
+      high: filteredDashboardIncidents.filter(
+        (incident) => incident.severity === "HIGH",
+      ).length,
+
+      medium: filteredDashboardIncidents.filter(
+        (incident) => incident.severity === "MEDIUM",
+      ).length,
+
+      low: filteredDashboardIncidents.filter(
+        (incident) => incident.severity === "LOW",
+      ).length,
+
+      criticalPriority: filteredDashboardIncidents.filter(
+        (incident) => incident.priority === "CRITICAL",
+      ).length,
+
+      highPriority: filteredDashboardIncidents.filter(
+        (incident) => incident.priority === "HIGH",
+      ).length,
+
+      mediumPriority: filteredDashboardIncidents.filter(
+        (incident) => incident.priority === "MEDIUM",
+      ).length,
+
+      lowPriority: filteredDashboardIncidents.filter(
+        (incident) => incident.priority === "LOW",
+      ).length,
+    };
+  }, [filteredDashboardIncidents]);
+  const severityData = [
+    { label: "Critical", value: dashboardStats.critical },
+    { label: "High", value: dashboardStats.high },
+    { label: "Medium", value: dashboardStats.medium },
+    { label: "Low", value: dashboardStats.low },
+  ];
+
+  const maxSeverityCount = Math.max(
+    ...severityData.map((item) => item.value),
+    1,
+  );
+
+  const incidentTrendData = useMemo(() => {
+    const days = Array.from({ length: 7 }, (_, index) => {
+      const date = new Date();
+      date.setHours(0, 0, 0, 0);
+      date.setDate(date.getDate() - (6 - index));
+
+      const key = [
+        date.getFullYear(),
+        String(date.getMonth() + 1).padStart(2, "0"),
+        String(date.getDate()).padStart(2, "0"),
+      ].join("-");
+
+      return {
+        key,
+        label: date.toLocaleDateString("en-US", {
+          weekday: "short",
+        }),
+        count: 0,
+      };
+    });
+
+    filteredDashboardIncidents.forEach((incident) => {
+      const date = new Date(incident.createdAt);
+
+      if (Number.isNaN(date.getTime())) return;
+
+      const key = [
+        date.getFullYear(),
+        String(date.getMonth() + 1).padStart(2, "0"),
+        String(date.getDate()).padStart(2, "0"),
+      ].join("-");
+
+      const day = days.find((item) => item.key === key);
+
+      if (day) day.count++;
+    });
+
+    return days;
+  }, [filteredDashboardIncidents]);
   const [recommendation, setRecommendation] = useState("");
   const [recommendationIncidentId, setRecommendationIncidentId] = useState<
     number | null
@@ -233,6 +421,61 @@ function App() {
     setSuccess("AI-recommended team member assigned successfully.");
   }
 
+  const handleExportDashboard = () => {
+    const headers = [
+      "ID",
+      "Title",
+      "Severity",
+      "Priority",
+      "Status",
+      "Service",
+      "Assigned To",
+      "SLA Status",
+      "Created At",
+    ];
+
+    const rows = filteredDashboardIncidents.map((incident) => {
+      const assignedMember = teamMembers.find(
+        (member) => member.id === incident.assignedToId,
+      );
+
+      return [
+        incident.id,
+        incident.title,
+        incident.severity,
+        incident.priority,
+        incident.status,
+        incident.serviceName,
+        assignedMember?.name || "Unassigned",
+        incident.slaStatus,
+        incident.createdAt,
+      ];
+    });
+
+    const escapeCsv = (value: unknown) => {
+      const text = String(value ?? "");
+      return `"${text.replace(/"/g, '""')}"`;
+    };
+
+    const csvContent = [
+      headers.map(escapeCsv).join(","),
+      ...rows.map((row) => row.map(escapeCsv).join(",")),
+    ].join("\n");
+
+    const blob = new Blob([csvContent], {
+      type: "text/csv;charset=utf-8;",
+    });
+
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+
+    link.href = url;
+    link.download = "opspilot-dashboard-report.csv";
+    link.click();
+
+    URL.revokeObjectURL(url);
+  };
+
   return (
     <main className="dashboard">
       <header className="dashboard-header">
@@ -250,6 +493,260 @@ function App() {
         </div>
       </header>
 
+      <section className="dashboard-filters">
+        <h3>Filter Dashboard</h3>
+
+        <div className="filter-controls">
+          <select
+            value={dashboardSeverityFilter}
+            onChange={(e) => setDashboardSeverityFilter(e.target.value)}
+          >
+            <option value="ALL">All Severities</option>
+            <option value="CRITICAL">Critical</option>
+            <option value="HIGH">High</option>
+            <option value="MEDIUM">Medium</option>
+            <option value="LOW">Low</option>
+          </select>
+
+          <select
+            value={dashboardStatusFilter}
+            onChange={(e) => setDashboardStatusFilter(e.target.value)}
+          >
+            <option value="ALL">All Statuses</option>
+            <option value="OPEN">Open</option>
+            <option value="IN_PROGRESS">In Progress</option>
+            <option value="RESOLVED">Resolved</option>
+          </select>
+
+          <select
+            value={dashboardAssigneeFilter}
+            onChange={(e) => setDashboardAssigneeFilter(e.target.value)}
+          >
+            <option value="ALL">All Team Members</option>
+            <option value="UNASSIGNED">Unassigned</option>
+            {teamMembers.map((member) => (
+              <option key={member.id} value={String(member.id)}>
+                {member.name}
+              </option>
+            ))}
+          </select>
+
+          <button
+            type="button"
+            onClick={() => {
+              setDashboardSeverityFilter("ALL");
+              setDashboardStatusFilter("ALL");
+              setDashboardAssigneeFilter("ALL");
+            }}
+          >
+            Reset Filters
+          </button>
+
+          <button type="button" onClick={handleExportDashboard}>
+            Export Dashboard CSV
+          </button>
+        </div>
+      </section>
+
+      <section className="analytics-section">
+        <h2>Incident Analytics</h2>
+
+        <div className="dashboard-grid">
+          <div className="stat-card">
+            <h3>Total Incidents</h3>
+            <p>{dashboardStats.total}</p>
+          </div>
+
+          <div className="stat-card">
+            <h3>Open Incidents</h3>
+            <p>{dashboardStats.open}</p>
+          </div>
+
+          <div className="stat-card">
+            <h3>In Progress</h3>
+            <p>{dashboardStats.inProgress}</p>
+          </div>
+
+          <div className="stat-card">
+            <h3>Resolved</h3>
+            <p>{dashboardStats.resolved}</p>
+          </div>
+
+          <div className="stat-card">
+            <h3>SLA Breached</h3>
+            <p>{dashboardStats.breached}</p>
+          </div>
+          <div className="stat-card">
+            <h3>Avg. Resolution Time</h3>
+            <p>{dashboardStats.averageResolutionMinutes} min</p>
+          </div>
+        </div>
+        <div className="sla-overview-section">
+          <h3>SLA Health Overview</h3>
+
+          <div className="sla-grid">
+            <div className="sla-card on-track">
+              <span>On Track</span>
+              <strong>{dashboardStats.onTrack}</strong>
+            </div>
+
+            <div className="sla-card at-risk">
+              <span>At Risk</span>
+              <strong>{dashboardStats.atRisk}</strong>
+            </div>
+
+            <div className="sla-card breached">
+              <span>Breached</span>
+              <strong>{dashboardStats.breached}</strong>
+            </div>
+
+            <div className="sla-card completed">
+              <span>Completed</span>
+              <strong>{dashboardStats.completed}</strong>
+            </div>
+          </div>
+        </div>
+        <div className="severity-section">
+          <h3>Incidents by Severity</h3>
+          <div className="severity-chart">
+            {severityData.map((item) => (
+              <div className="chart-row" key={item.label}>
+                <span className="chart-label">{item.label}</span>
+
+                <div className="chart-track">
+                  <div
+                    className={`chart-bar ${item.label.toLowerCase()}`}
+                    style={{
+                      width: `${(item.value / maxSeverityCount) * 100}%`,
+                    }}
+                  />
+                </div>
+
+                <strong>{item.value}</strong>
+              </div>
+            ))}
+          </div>
+          <div className="severity-grid">
+            <div className="severity-card critical">
+              <span>Critical</span>
+              <strong>{dashboardStats.critical}</strong>
+            </div>
+
+            <div className="severity-card high">
+              <span>High</span>
+              <strong>{dashboardStats.high}</strong>
+            </div>
+
+            <div className="severity-card medium">
+              <span>Medium</span>
+              <strong>{dashboardStats.medium}</strong>
+            </div>
+
+            <div className="severity-card low">
+              <span>Low</span>
+              <strong>{dashboardStats.low}</strong>
+            </div>
+          </div>
+        </div>
+        <div className="priority-section">
+          <h3>Incidents by Priority</h3>
+
+          <div className="priority-grid">
+            <div className="priority-card critical">
+              <span>Critical</span>
+              <strong>{dashboardStats.criticalPriority}</strong>
+            </div>
+
+            <div className="priority-card high">
+              <span>High</span>
+              <strong>{dashboardStats.highPriority}</strong>
+            </div>
+
+            <div className="priority-card medium">
+              <span>Medium</span>
+              <strong>{dashboardStats.mediumPriority}</strong>
+            </div>
+
+            <div className="priority-card low">
+              <span>Low</span>
+              <strong>{dashboardStats.lowPriority}</strong>
+            </div>
+          </div>
+        </div>
+        <div className="workload-section">
+          <h3>Team Workload Analytics</h3>
+
+          <div className="workload-summary">
+            <div className="workload-card">
+              <span>Unassigned Incidents</span>
+              <strong>{unassignedIncidents.length}</strong>
+            </div>
+
+            <div className="workload-card">
+              <span>Team Members</span>
+              <strong>{teamMembers.length}</strong>
+            </div>
+          </div>
+
+          <div className="workload-list">
+            {workloadData.map((member) => (
+              <div className="workload-item" key={member.id}>
+                <div className="workload-info">
+                  <strong>{member.name}</strong>
+                  <span>
+                    {member.total} assigned · {member.inProgress} in progress
+                  </span>
+                </div>
+
+                <div className="workload-track">
+                  <div
+                    className="workload-bar"
+                    style={{
+                      width: `${
+                        (member.total /
+                          Math.max(
+                            ...workloadData.map((item) => item.total),
+                            1,
+                          )) *
+                        100
+                      }%`,
+                    }}
+                  />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+        <div className="trend-section">
+          <h3>Incident Trends (Last 7 Days)</h3>
+
+          <div className="trend-chart">
+            {incidentTrendData.map((day) => (
+              <div className="trend-column" key={day.key}>
+                <strong>{day.count}</strong>
+
+                <div className="trend-bar-container">
+                  <div
+                    className="trend-bar"
+                    style={{
+                      height: `${
+                        (day.count /
+                          Math.max(
+                            ...incidentTrendData.map((item) => item.count),
+                            1,
+                          )) *
+                        100
+                      }%`,
+                    }}
+                  />
+                </div>
+
+                <span>{day.label}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
       <section className="incident-section">
         <h2>Create Incident</h2>
 
