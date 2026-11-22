@@ -1,3 +1,4 @@
+
 package opspilot_backend.team.dto;
 
 import jakarta.validation.constraints.Email;
@@ -17,6 +18,9 @@ public record CreateTeamMemberRequest(
 
     @NotBlank
     @Size(max = 50)
-    String role
+    String role,
+
+    @Size(max = 500)
+    String skills
 
 ) {}

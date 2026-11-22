@@ -1,3 +1,4 @@
+
 package opspilot_backend.team.dto;
 
 import opspilot_backend.team.entity.TeamMember;
@@ -8,6 +9,7 @@ public record TeamMemberResponse(
     String name,
     String email,
     String role,
+    String skills,
     OffsetDateTime createdAt
 ) {
 
@@ -17,6 +19,7 @@ public record TeamMemberResponse(
             member.getName(),
             member.getEmail(),
             member.getRole(),
+            member.getSkills(),
             member.getCreatedAt()
         );
     }

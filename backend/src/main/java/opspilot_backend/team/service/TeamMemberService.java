@@ -27,8 +27,7 @@ public class TeamMemberService {
 
         if (teamMemberRepository.existsByEmail(email)) {
             throw new IllegalArgumentException(
-                "A team member with this email already exists."
-            );
+                    "A team member with this email already exists.");
         }
 
         TeamMember member = new TeamMember();
@@ -37,7 +36,8 @@ public class TeamMemberService {
         member.setEmail(email);
         member.setRole(request.role().trim().toUpperCase());
         member.setCreatedAt(OffsetDateTime.now());
-
+        member.setSkills(
+                request.skills() == null ? null : request.skills().trim());
         return teamMemberRepository.save(member);
     }
 

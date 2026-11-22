@@ -140,3 +140,35 @@ export async function assignIncident(
 
   return response.json();
 }
+
+
+export interface AssigneeRecommendation {
+  recommendation: string;
+}
+
+export async function recommendIncidentAssignee(
+  incident: Incident,
+): Promise<string> {
+  const response = await fetch(
+    "http://localhost:8080/api/ai/recommend-assignee",
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        title: incident.title,
+        description: incident.description,
+        severity: incident.severity,
+        serviceName: incident.serviceName,
+      }),
+    },
+  );
+
+  if (!response.ok) {
+    const message = await response.text();
+    throw new Error(message || "Failed to get AI recommendation");
+  }
+
+  return response.text();
+}

@@ -6,6 +6,7 @@ import {
   getIncidentActivities,
   getTeamMembers,
   assignIncident,
+  recommendIncidentAssignee,
   type Incident,
   type TeamMember,
   type CreateIncidentRequest,
@@ -38,6 +39,11 @@ function App() {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
+  const [recommendation, setRecommendation] = useState("");
+  const [recommendationIncidentId, setRecommendationIncidentId] = useState<
+    number | null
+  >(null);
+  const [recommendationLoading, setRecommendationLoading] = useState(false);
 
   async function loadIncidents() {
     setError("");
@@ -181,6 +187,50 @@ function App() {
       console.error("Failed to assign incident:", error);
       alert("Failed to assign incident. Please try again.");
     }
+  }
+
+  async function handleRecommendAssignee(incident: Incident) {
+    setRecommendationLoading(true);
+    setRecommendation("");
+    setRecommendationIncidentId(incident.id);
+    setError("");
+
+    try {
+      const result = await recommendIncidentAssignee(incident);
+      setRecommendation(result);
+    } catch (err: unknown) {
+      setError(
+        err instanceof Error ? err.message : "Failed to get AI recommendation",
+      );
+      setRecommendationIncidentId(null);
+    } finally {
+      setRecommendationLoading(false);
+    }
+  }
+
+  async function handleAcceptRecommendation(incidentId: number) {
+    const match = recommendation.match(/Recommended team member ID:\s*(\d+)/i);
+
+    if (!match) {
+      setError(
+        "Could not identify a valid team member ID in the AI recommendation.",
+      );
+      return;
+    }
+
+    const teamMemberId = Number(match[1]);
+
+    const memberExists = teamMembers.some(
+      (member) => member.id === teamMemberId,
+    );
+
+    if (!memberExists) {
+      setError("The recommended team member does not exist.");
+      return;
+    }
+
+    await handleAssignIncident(incidentId, teamMemberId);
+    setSuccess("AI-recommended team member assigned successfully.");
   }
 
   return (
@@ -414,6 +464,36 @@ function App() {
                   ))}
                 </select>
               </div>
+
+              <button
+                type="button"
+                onClick={() => void handleRecommendAssignee(incident)}
+                disabled={recommendationLoading}
+              >
+                {recommendationLoading &&
+                recommendationIncidentId === incident.id
+                  ? "Analyzing..."
+                  : "Recommend Assignee (AI)"}
+              </button>
+
+              {recommendationIncidentId === incident.id && (
+                <div className="ai-recommendation">
+                  <h4>AI Assignment Recommendation</h4>
+
+                  {recommendationLoading ? (
+                    <p>AI is analyzing the incident and team skills...</p>
+                  ) : (
+                    <p className="recommendation-text">{recommendation}</p>
+                  )}
+                </div>
+              )}
+              <button
+                type="button"
+                onClick={() => void handleAcceptRecommendation(incident.id)}
+              >
+                Accept Recommendation
+              </button>
+
               <button
                 type="button"
                 onClick={() => void handleViewActivity(incident.id)}

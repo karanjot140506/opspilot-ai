@@ -21,6 +21,9 @@ public class TeamMember {
     @Column(nullable = false, length = 50)
     private String role;
 
+    @Column(length = 500)
+    private String skills;
+
     @Column(name = "created_at", nullable = false)
     private OffsetDateTime createdAt;
 
@@ -57,6 +60,14 @@ public class TeamMember {
 
     public void setRole(String role) {
         this.role = role;
+    }
+
+    public String getSkills() {
+        return skills;
+    }
+
+    public void setSkills(String skills) {
+        this.skills = skills;
     }
 
     public OffsetDateTime getCreatedAt() {
