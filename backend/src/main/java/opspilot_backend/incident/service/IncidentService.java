@@ -4,6 +4,7 @@ package opspilot_backend.incident.service;
 import opspilot_backend.incident.entity.Incident;
 import opspilot_backend.incident.repository.IncidentRepository;
 import opspilot_backend.incident.activity.service.IncidentActivityService;
+import opspilot_backend.notification.service.NotificationService;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -20,14 +21,17 @@ public class IncidentService {
         private final IncidentRepository incidentRepository;
         private final IncidentActivityService activityService;
         private final TeamMemberRepository teamMemberRepository;
+        private final NotificationService notificationService;
 
         public IncidentService(
                         IncidentRepository incidentRepository,
                         IncidentActivityService activityService,
-                        TeamMemberRepository teamMemberRepository) {
+                        TeamMemberRepository teamMemberRepository,
+                        NotificationService notificationService) {
                 this.incidentRepository = incidentRepository;
                 this.activityService = activityService;
                 this.teamMemberRepository = teamMemberRepository;
+                this.notificationService = notificationService;
         }
 
         @Transactional
@@ -95,6 +99,15 @@ public class IncidentService {
                                 "Incident assigned to " + member.getName(),
                                 oldAssigneeId == null ? null : oldAssigneeId.toString(),
                                 teamMemberId.toString());
+
+                notificationService.createNotification(
+                                savedIncident,
+                                member,
+                                "ASSIGNED",
+                                "Incident assigned to you",
+                                "Incident #" + savedIncident.getId()
+                                                + " - " + savedIncident.getTitle()
+                                                + " has been assigned to you.");
 
                 return savedIncident;
         }
@@ -264,5 +277,20 @@ public class IncidentService {
                                                 + oldPriority + " to " + newPriority,
                                 oldPriority,
                                 newPriority);
+                if (savedIncident.getAssignedToId() != null) {
+
+                        teamMemberRepository.findById(savedIncident.getAssignedToId())
+                                        .ifPresent(member -> notificationService.createNotification(
+                                                        savedIncident,
+                                                        member,
+                                                        "ESCALATED",
+                                                        "Incident escalated to " + newPriority,
+                                                        "Incident #" + savedIncident.getId()
+                                                                        + " - " + savedIncident.getTitle()
+                                                                        + " was automatically escalated from "
+                                                                        + oldPriority + " to " + newPriority
+                                                                        + " because its resolution SLA was breached."));
+                }
         }
+
 }

@@ -7,10 +7,15 @@ import {
   getTeamMembers,
   assignIncident,
   recommendIncidentAssignee,
+  getNotifications,
+  getUnreadNotificationCount,
+  markNotificationAsRead,
+  markAllNotificationsAsRead,
   type Incident,
   type TeamMember,
   type CreateIncidentRequest,
   type IncidentActivity,
+  type Notification,
 } from "./api/incidents";
 import "./App.css";
 
@@ -39,6 +44,11 @@ function App() {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [unreadNotificationCount, setUnreadNotificationCount] = useState(0);
+  const [notificationPanelOpen, setNotificationPanelOpen] = useState(false);
+  const [notificationLoading, setNotificationLoading] = useState(false);
+  const [notificationError, setNotificationError] = useState("");
   const [dashboardSeverityFilter, setDashboardSeverityFilter] = useState("ALL");
 
   const [dashboardStatusFilter, setDashboardStatusFilter] = useState("ALL");
@@ -244,9 +254,57 @@ function App() {
       setLoading(false);
     }
   }
+  const NOTIFICATION_RECIPIENT_ID = 1;
 
+  const loadNotifications = async () => {
+    setNotificationLoading(true);
+    setNotificationError("");
+
+    try {
+      const [notificationData, unreadCount] = await Promise.all([
+        getNotifications(NOTIFICATION_RECIPIENT_ID),
+        getUnreadNotificationCount(NOTIFICATION_RECIPIENT_ID),
+      ]);
+
+      setNotifications(notificationData);
+      setUnreadNotificationCount(unreadCount);
+    } catch (err) {
+      setNotificationError("Unable to load notifications.");
+      console.error(err);
+    } finally {
+      setNotificationLoading(false);
+    }
+  };
+  const handleMarkNotificationAsRead = async (notificationId: number) => {
+    try {
+      await markNotificationAsRead(notificationId);
+      await loadNotifications();
+    } catch (err) {
+      setNotificationError("Unable to update notification.");
+      console.error(err);
+    }
+  };
+
+  const handleMarkAllNotificationsAsRead = async () => {
+    try {
+      await markAllNotificationsAsRead(NOTIFICATION_RECIPIENT_ID);
+      await loadNotifications();
+    } catch (err) {
+      setNotificationError("Unable to update notifications.");
+      console.error(err);
+    }
+  };
   useEffect(() => {
     void loadIncidents();
+  }, []);
+  useEffect(() => {
+    loadNotifications();
+
+    const notificationInterval = setInterval(() => {
+      loadNotifications();
+    }, 30000);
+
+    return () => clearInterval(notificationInterval);
   }, []);
 
   useEffect(() => {
@@ -487,9 +545,24 @@ function App() {
           </p>
         </div>
 
-        <div className="incident-count">
-          <span>Total incidents</span>
-          <strong>{incidents.length}</strong>
+        <div className="header-actions">
+          <button
+            className="notification-bell"
+            onClick={() => setNotificationPanelOpen(!notificationPanelOpen)}
+            aria-label="Toggle notifications"
+          >
+            🔔
+            {unreadNotificationCount > 0 && (
+              <span className="notification-badge">
+                {unreadNotificationCount}
+              </span>
+            )}
+          </button>
+
+          <div className="incident-count">
+            <span>Total incidents</span>
+            <strong>{incidents.length}</strong>
+          </div>
         </div>
       </header>
 
@@ -1027,6 +1100,61 @@ function App() {
           ))}
         </div>
       </section>
+      {notificationPanelOpen && (
+        <section className="notification-panel">
+          <div className="notification-panel-header">
+            <h2>Notifications</h2>
+
+            {unreadNotificationCount > 0 && (
+              <button
+                onClick={handleMarkAllNotificationsAsRead}
+                className="mark-all-read-button"
+              >
+                Mark all as read
+              </button>
+            )}
+          </div>
+
+          {notificationError && (
+            <p className="notification-error">{notificationError}</p>
+          )}
+
+          {notificationLoading && <p>Loading notifications...</p>}
+
+          {!notificationLoading && notifications.length === 0 && (
+            <p className="empty-notifications">No notifications yet.</p>
+          )}
+
+          {!notificationLoading &&
+            notifications.map((notification) => (
+              <div
+                key={notification.id}
+                className={`notification-item ${
+                  notification.read ? "read" : "unread"
+                }`}
+              >
+                <div>
+                  <strong>{notification.title}</strong>
+                  <p>{notification.message}</p>
+                  <small>
+                    {new Date(notification.createdAt).toLocaleString()}
+                  </small>
+                </div>
+
+                {!notification.read && (
+                  <button
+                    onClick={() =>
+                      handleMarkNotificationAsRead(notification.id)
+                    }
+                    className="mark-read-button"
+                  >
+                    Mark read
+                  </button>
+                )}
+              </div>
+            ))}
+        </section>
+      )}
     </main>
   );
 }
